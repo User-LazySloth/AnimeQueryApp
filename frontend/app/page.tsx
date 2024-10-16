@@ -33,7 +33,7 @@ export default function AnimeQueryApp() {
     setError(null)
 
     try {
-      const response = await axios.post('http://localhost:5001/query', { text: query })
+      const response = await axios.post('https://animequeryapp.onrender.com/query', { text: query })
       setResults(response.data)
     } catch (err) {
       setError('An error occurred while fetching results')
