@@ -37,9 +37,9 @@ export default function AnimeQueryApp() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-    setCurrentPage(0) // Reset to first page on new search
+    setCurrentPage(0)
     try {
-      const response = await fetch('http://localhost:5001/query', {
+      const response = await fetch('https://animequeryapp.onrender.com/query', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
