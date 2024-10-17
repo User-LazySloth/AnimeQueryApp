@@ -4,6 +4,8 @@ import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
+from groq import Groq
+
 
 app = Flask(__name__)
 CORS(app)
@@ -55,7 +57,41 @@ def query():
         ],
         "namespace": answer.namespace
     }
-    
+
+    synopsis = {}
+    for anime in response_dict["matches"]:
+        synopsis[anime["metadata"]["name"]] = [anime["synopsis"]]
+
+    client = Groq(api_key = os.environ["GROQ_API_KEY"])
+    chat_completion = client.chat.completions.create(
+        messages = [
+            {
+                "role": "user",
+                "content": f"""Please just provide the name of the anime followed by the corresponding synopsis of the anime that you think is the closest match to the query: {text}, from the following dictionary: {synopsis}. Please give the answer in the following format: "Name of the anime :- Synopsis of the anime" """,
+            }
+        ],
+        model = "llama3-70b-8192",
+    )
+
+    llm_response = chat_completion.choices[0].message.content
+    llm_response = llm_response.split("\n\n")
+    if len(llm_response) > 1:
+        llm_response = llm_response[1]
+    else:
+        llm_response = llm_response[0]
+
+    best_match = str(llm_response).split(":-")[0].strip()
+
+    matches = {}
+    for anime in response_dict["matches"]:
+        if anime["metadata"]["name"] != best_match:
+            matches[anime["metadata"]["name"]] = [anime["synopsis"], anime["score"], anime["metadata"]["genres"]]
+        else:
+            best_synopsis = [anime["synopsis"], anime["score"], anime["metadata"]["genres"]]
+
+    best_match = {best_match: best_synopsis}
+    response_dict = list({**best_match, **matches}.items())
+
     return jsonify(response_dict), 200
 
 if __name__ == '__main__':
